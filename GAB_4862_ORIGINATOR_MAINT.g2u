@@ -1,0 +1,268 @@
+Program.Sub.ScreenSU.Start
+Gui.F_ORIGINATOR..create
+Gui.F_ORIGINATOR..caption("SO Approval Originator Maintenance [APAC]")
+Gui.F_ORIGINATOR..size(9780,7380)
+Gui.F_ORIGINATOR..minx(0)
+Gui.F_ORIGINATOR..miny(0)
+Gui.F_ORIGINATOR..position(10500,4200)
+Gui.F_ORIGINATOR..event(UnLoad,f_originator_unload)
+Gui.F_ORIGINATOR..forecolor(0)
+Gui.F_ORIGINATOR..BackColor(-2147483633)
+Gui.F_ORIGINATOR..maxbutton(False)
+Gui.F_ORIGINATOR..mousepointer(0)
+Gui.F_ORIGINATOR..sizeable(False)
+Gui.F_ORIGINATOR.lblApprover.create(label,"Current Approvers",True,4125,255,1,195,1380,True,0,Arial,9,-2147483633,0)
+Gui.F_ORIGINATOR.lblApprover.defaultvalue("")
+Gui.F_ORIGINATOR.frameLimit.Create(Frame)
+Gui.F_ORIGINATOR.frameLimit.Size(9225,1035)
+Gui.F_ORIGINATOR.frameLimit.Position(210,105)
+Gui.F_ORIGINATOR.frameLimit.Caption("Amount Limit Setup")
+Gui.F_ORIGINATOR.frameLimit.FontSize(9)
+Gui.F_ORIGINATOR.lbl1.create(label,"UserID",True,1215,255,1,105,300,True,0,Arial,9,-2147483633,0)
+Gui.F_ORIGINATOR.lbl1.defaultvalue("")
+Gui.F_ORIGINATOR.lbl1.Parent("frameLimit")
+Gui.F_ORIGINATOR.txtUserCode.create(textbox,"",True,1215,315,0,135,510,True,0,Arial,9,-2147483643,1)
+Gui.F_ORIGINATOR.txtUserCode.defaultvalue("")
+Gui.F_ORIGINATOR.txtUserCode.Parent("frameLimit")
+Gui.F_ORIGINATOR.cmd_txtUserCode.create(button)
+Gui.F_ORIGINATOR.cmd_txtUserCode.caption("^")
+Gui.F_ORIGINATOR.cmd_txtUserCode.size(375,375)
+Gui.F_ORIGINATOR.cmd_txtUserCode.position(1455,450)
+Gui.F_ORIGINATOR.cmd_txtUserCode.event(Click,cmd_txtusercode_click)
+Gui.F_ORIGINATOR.cmd_txtUserCode.disableonclick(20)
+Gui.F_ORIGINATOR.cmd_txtUserCode.defaultvalue("")
+Gui.F_ORIGINATOR.cmd_txtUserCode.tabstop(True)
+Gui.F_ORIGINATOR.cmd_txtUserCode.tabindex(1)
+Gui.F_ORIGINATOR.cmd_txtUserCode.Parent("frameLimit")
+Gui.F_ORIGINATOR.lbl2.create(label,"User Name",True,1830,255,1,1920,300,True,0,Arial,9,-2147483633,0)
+Gui.F_ORIGINATOR.lbl2.defaultvalue("")
+Gui.F_ORIGINATOR.lbl2.Parent("frameLimit")
+Gui.F_ORIGINATOR.txtUserName.create(textbox,"",True,4005,315,0,1920,510,True,0,Arial,9,-2147483643,1)
+Gui.F_ORIGINATOR.txtUserName.defaultvalue("")
+Gui.F_ORIGINATOR.txtUserName.Parent("frameLimit")
+Gui.F_ORIGINATOR.lblLimit.create(label,"Limit",True,1785,255,1,6015,300,True,0,Arial,9,-2147483633,0)
+Gui.F_ORIGINATOR.lblLimit.defaultvalue("")
+Gui.F_ORIGINATOR.lblLimit.Parent("frameLimit")
+Gui.F_ORIGINATOR.txtPOLimit.Create(TextBox,"",True,1935,315,0,6045,510,True,1,"Arial",9,-2147483643,1)
+Gui.F_ORIGINATOR.txtPOLimit.Parent("frameLimit")
+Gui.F_ORIGINATOR.txtPOLimit.NumericOnly(True)
+Gui.F_ORIGINATOR.cmdSave.create(button)
+Gui.F_ORIGINATOR.cmdSave.caption("Save")
+Gui.F_ORIGINATOR.cmdSave.size(990,375)
+Gui.F_ORIGINATOR.cmdSave.position(8115,435)
+Gui.F_ORIGINATOR.cmdSave.fontsize(9)
+Gui.F_ORIGINATOR.cmdSave.event(Click,cmdsave_click)
+Gui.F_ORIGINATOR.cmdSave.defaultvalue("")
+Gui.F_ORIGINATOR.cmdSave.tabstop(True)
+Gui.F_ORIGINATOR.cmdSave.tabindex(5)
+Gui.F_ORIGINATOR.cmdSave.Parent("frameLimit")
+Gui.F_ORIGINATOR.GsGCAppr.Create(GsGridControl)
+Gui.F_ORIGINATOR.GsGCAppr.Size(9225,5100)
+Gui.F_ORIGINATOR.GsGCAppr.Position(210,1620)
+Gui.F_ORIGINATOR.GsGCAppr.Event(RowCellClick,gsfgoriginator_commandclick)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+V.Local.bExist.Declare
+V.Local.sIcon.Declare
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.Build("{0}\ART\gss2.ico",V.Caller.GlobalDir,v.Local.sIcon)
+'F.Intrinsic.String.Build("{0}\GAB\GAS\gss2.ico",V.Caller.PluginsDir,v.Local.sIcon)
+Gui.F_ORIGINATOR..Icon(V.Local.sIcon)
+
+'Check if custom table exists
+F.ODBC.Connection!conx.TableExists("GAB_4862_DOL_LMT",V.Local.bExist)
+F.Intrinsic.Control.If(V.Local.bExist,=,False)
+	F.ODBC.Connection!Conx.Execute("CREATE TABLE GAB_4862_DOL_LMT(GS_USER VARCHAR(8) NOT NULL,APPROVAL_LIMIT DOUBLE NOT NULL);")
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!conx.TableExists("GAB_4862_APRVRS",V.Local.bExist)
+F.Intrinsic.Control.If(V.Local.bExist,=,False)
+	F.ODBC.Connection!Conx.Execute("CREATE TABLE GAB_4862_APRVRS(GS_USER VARCHAR(8) NOT NULL,APPROVER VARCHAR(8) NOT NULL);")
+F.Intrinsic.Control.EndIf
+
+'Lock text boxes so users can't type in them
+'Text boxes can only be filled by using the browsers
+Gui.F_ORIGINATOR.txtUserCode.Locked(True)
+Gui.F_ORIGINATOR.txtUserName.Locked(True)
+Gui.F_ORIGINATOR.cmd_txtUserCode.SetFocus
+Gui.F_ORIGINATOR..Show
+Program.Sub.Main.End
+
+Program.Sub.f_originator_unload.Start
+F.Intrinsic.Control.If(V.DataTable.dtAppr.Exists,=,True)
+	F.Data.DataTable.Close("dtAppr")
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+Program.Sub.f_originator_unload.End
+
+Program.Sub.cmd_txtusercode_click.Start
+V.Local.sName.Declare
+V.Local.sQuery.Declare
+V.Local.sRet.Declare
+V.Local.sTitles.Declare
+
+Function.Intrinsic.UI.CommonBrowser(10,"",V.Local.sRet)
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	Gui.F_ORIGINATOR.txtUserCode.Text(V.Local.sRet(1).Trim)
+	F.Intrinsic.String.Build("Current Approvers for {0}",V.Local.sRet(1).Trim,V.Local.stitles)
+	Gui.F_ORIGINATOR.lblApprover.Caption(V.Local.stitles)
+	F.Intrinsic.String.Build("{0} {1}",V.Local.sRet(3).Trim,V.Local.sRet(4).Trim,V.Local.sName)
+	Gui.F_ORIGINATOR.txtUserName.Text(V.Local.sName)
+F.Intrinsic.Control.EndIf
+
+'Check to see if user already has a Dollar Limit, display if true
+F.Intrinsic.String.Build("Select * From GAB_4862_DOL_LMT where GS_USER='{0}'",V.Screen.F_ORIGINATOR!txtUserCode.Text,V.Local.sQuery)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sQuery)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+	Gui.F_ORIGINATOR.txtPOLimit.Text(V.ODBC.conx!rst.FieldVal!APPROVAL_LIMIT)
+F.Intrinsic.Control.Else
+	Gui.F_ORIGINATOR.txtPOLimit.Text("")
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rst.Close
+'Populate the flexgrid with user's existing approvers
+'If user doesn't already have approvers, flexgrid will remain blank
+F.Intrinsic.control.CallSub(Loadflexgrid)
+Program.Sub.cmd_txtusercode_click.End
+
+Program.Sub.cmdsave_click.Start
+V.Local.bNo.Declare
+V.Local.sQuery.Declare
+V.Local.sUser.Declare
+
+'Check to see if SO Limit is numeric
+F.Intrinsic.Math.IsNumeric(V.Screen.F_ORIGINATOR!txtPOLimit.Text,V.Local.bNo)
+
+'Check to see if a user is selected and a SO Limit has been entered
+F.Intrinsic.Control.If(V.Screen.F_ORIGINATOR!txtUserCode.Text,=,"")
+	F.Intrinsic.UI.Msgbox("Please Select a User","SO Approval Originator Maintenance [APAC]")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.ElseIf(V.Screen.F_ORIGINATOR!txtPOLimit.Text,=,"")
+	F.Intrinsic.UI.Msgbox("Please Set the Amount Limit","SO Approval Originator Maintenance [APAC]")
+	F.Intrinsic.Control.ExitSub
+'If PO Limit isn't numeric, give error message and exit sub
+F.Intrinsic.Control.ElseIf(V.Local.bNo,=,False)
+	F.Intrinsic.UI.Msgbox("Invalid Dollar Limit","SO Approval Originator Maintenance [APAC]")
+	Gui.F_ORIGINATOR.txtPOLimit.Text("")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Else
+	V.Local.sUser.Set(V.Screen.F_ORIGINATOR!txtUserCode.Text)
+	'Open record set, see if user already has a Dollar limit
+	'If EOF=True, add new record set
+	F.Intrinsic.String.Build("Select * from GAB_4862_DOL_LMT where GS_USER = '{0}'",V.Local.sUser.Trim,V.Local.sQuery)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRW("rst",V.Local.sQuery)
+
+	'Add to GAB_4862_DOL_LMT
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+		F.ODBC.conx!rst.AddNew
+		F.ODBC.conx!rst.Set!GS_USER(V.Local.sUser.Trim)
+		F.ODBC.conx!rst.Set!APPROVAL_LIMIT(V.Screen.F_ORIGINATOR!txtPOLimit.Text)
+		F.ODBC.conx!rst.Update
+	'If EOF=False, update Dollar Limit for that user
+	F.Intrinsic.Control.Else
+		F.ODBC.conx!rst.Set!APPROVAL_LIMIT(V.Screen.F_ORIGINATOR!txtPOLimit.Text)
+		F.ODBC.conx!rst.Update
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.Close
+F.Intrinsic.Control.EndIf
+Program.Sub.cmdsave_click.End
+
+Program.Sub.LoadFlexgrid.Start
+V.Local.i1.Declare
+V.Local.sName.Declare
+V.Local.sQuery.Declare
+
+Gui.F_ORIGINATOR.GsGCAppr.Visible(False)
+F.Intrinsic.Control.If(V.DataTable.dtAppr.Exists,=,True)
+	F.Data.DataTable.Close("dtAppr")
+F.Intrinsic.Control.EndIf
+F.Intrinsic.String.Build("Select Approver from GAB_4862_APRVRS where GS_USER='{0}' order by Approver",V.Screen.F_ORIGINATOR!txtUserCode.Text,V.local.sQuery)
+F.Data.DataTable.CreateFromSQL("dtAppr","Conx",V.Local.sQuery,True)
+F.Data.DataTable.AddColumn("dtAppr","Name","String")
+F.Data.DataTable.AddColumn("dtAppr","Delete","String")
+
+F.Intrinsic.Control.If(V.DataTable.dtAppr.RowCount,>,0)
+	F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtAppr.RowCount--,1)
+		F.Global.Security.GetFullName(V.DataTable.dtAppr(V.Local.i1).Approver!FieldValTrim,V.Local.sName)
+		F.Data.DataTable.SetValue("dtAppr",V.Local.i1,"Name",V.Local.sName.Trim)
+	F.Intrinsic.Control.Next(V.Local.i1)
+F.Intrinsic.Control.EndIf
+F.Data.DataTable.AddRow("dtAppr","Approver","","Name","")
+Gui.F_ORIGINATOR.GsGCAppr.AddGridviewFromDatatable("gvAppr","dtAppr")
+Gui.F_ORIGINATOR.GsGCAppr.MainView("gvAppr")
+Gui.F_ORIGINATOR.GsGCAppr.SetColumnProperty("gvAppr","Delete","ShowCaption",False)
+Gui.F_ORIGINATOR.GsGCAppr.ColumnEdit("gvAppr","Delete","EditorButton","Delete")
+Gui.F_ORIGINATOR.GsGCAppr.SetColumnProperty("gvAppr","Approver","Caption","Approver")
+Gui.F_ORIGINATOR.GsGCAppr.SetColumnProperty("gvAppr","Approver","HeaderHAlignment","Center")
+Gui.F_ORIGINATOR.GsGCAppr.SetColumnProperty("gvAppr","Name","HeaderHAlignment","Center")
+Gui.F_ORIGINATOR.GsGCAppr.SetColumnProperty("gvAppr","Approver","CellHAlignment","Center")
+Gui.F_ORIGINATOR.GsGCAppr.SetColumnProperty("gvAppr","Approver","AllowEdit",False)
+Gui.F_ORIGINATOR.GsGCAppr.SetColumnProperty("gvAppr","Name","AllowEdit",False)
+Gui.F_ORIGINATOR.GsGCAppr.SetColumnProperty("gvAppr","Delete","AllowEdit",False)
+Gui.F_ORIGINATOR.GsGCAppr.Visible(True)
+Program.Sub.LoadFlexgrid.End
+
+Program.Sub.gsfgoriginator_commandclick.Start
+V.Local.fLimit.Declare
+V.Local.sFilter.Declare
+V.Local.sText.Declare(String)
+V.Local.sName.Declare
+V.Local.sQuery.Declare(String)
+V.Local.sRet.Declare
+V.Local.sSelect.Declare
+V.Local.sTitles.Declare
+V.Local.sUser.Declare
+V.Local.iType.Declare(Long)
+V.Local.iWidths.Declare
+
+V.Local.sUser.Set(V.Screen.F_ORIGINATOR!txtUserCode.Text)
+
+F.Intrinsic.Control.If(V.Args.Column,=,"Delete")
+	'Remove the approver
+	F.Intrinsic.Control.If(V.DataTable.dtAppr(V.Args.RowIndex).Approver!FieldValTrim,<>,"")
+		V.Local.sText.Set(V.DataTable.dtAppr(V.Args.RowIndex).Approver!FieldValTrim)
+		F.Intrinsic.String.Build("DELETE from GAB_4862_APRVRS where AND GS_USER = '{0}' AND APPROVER = '{1}'",V.Local.sUser.Trim,V.Local.sText.Trim,V.Local.sQuery)
+		F.ODBC.Connection!conx.Execute(V.Local.sQuery)
+		F.Data.DataTable.DeleteRow("dtAppr",V.Args.RowIndex)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+	V.Local.fLimit.Set(V.Screen.F_ORIGINATOR!txtPOLimit.Text)
+	'Select an approver only if Approver column is blank
+	F.Intrinsic.Control.If(V.DataTable.dtAppr(V.Args.RowIndex).Approver!FieldValTrim,=,"")
+	F.Intrinsic.Control.AndIf(V.Local.fLimit,>,0)
+		F.Intrinsic.String.Split("UserID*!*Limit","*!*",V.Local.sTitles)
+		F.Intrinsic.String.Split("1200*!*1800","*!*",V.Local.iWidths)
+		F.Intrinsic.String.Build("select gs_user, APPROVAL_LIMIT from GAB_4862_dol_lmt where APPROVAL_LIMIT > {0} order by gs_user",V.Local.fLimit,V.Local.sQuery)
+		F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+		F.Intrinsic.UI.Browser("Select a UserID","conx",V.Local.sQuery,V.Local.sTitles,V.Local.iWidths,V.Local.sRet)
+		F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+			'Check if the user has been selected as an approver
+			F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+			F.Intrinsic.String.Build("Approver = '{0}'",V.Local.sRet(0).Trim,V.Local.sFilter)
+			F.Data.DataTable.Select("dtAppr",V.Local.sFilter,V.Local.sSelect)
+			F.Intrinsic.Control.If(V.Local.sSelect,=,"***NORETURN***")
+				F.Intrinsic.String.Build("insert into GAB_4862_APRVRS(gs_user,approver) values('{0}','{1}')",V.Local.sUser.Trim,V.Local.sRet(0).Trim,V.Local.sQuery)
+				F.ODBC.Connection!conx.Execute(V.Local.sQuery)
+				F.Global.Security.GetFullName(V.Local.sRet(0).Trim,V.Local.sName)
+				F.Data.DataTable.SetValue("dtAppr",V.DataTable.dtAppr.RowCount--,"Approver",V.Local.sRet(0).Trim,"Name",V.Local.sName.Trim)
+				F.Data.DataTable.AddRow("dtAppr","Approver","","Name","")
+			F.Intrinsic.Control.Else
+				F.Intrinsic.UI.Msgbox("The selected user has already been set as an approver","SO Approval Originator Maintenance [APAC]")
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+Program.Sub.gsfgoriginator_commandclick.End
+
+Program.Sub.Comments.Start
+${$0$}$SO Approval Originator Maintenance$}$MHERTANTO$}$5/12/2017 10:28:26 AM$}$False
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$This program is used to set limit for every user in SO approval program and define originator-approver relationship.
+Program.Sub.Comments.End
