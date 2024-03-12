@@ -1,0 +1,440 @@
+﻿Program.Sub.Preflight.Start
+V.Global.fLimit.Declare
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.If(V.Caller.Hook,=,11560)
+	'SO header populate hook
+	F.Intrinsic.Control.CallSub(hook11560)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,11565)
+	'SO header order selected
+	F.Intrinsic.Control.CallSub(hook11565)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,11780)
+	'SO header email button
+	F.Intrinsic.Control.CallSub(hook11565)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,11872)
+	'SO header post save
+	F.Intrinsic.Control.CallSub(hook11872)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,11882)
+	'SO header post delete
+	F.Intrinsic.Control.CallSub(hook11882)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,11890)
+	'SO header print button
+	F.Intrinsic.Control.CallSub(hook11565)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,12010)
+	'SO line populate hook
+	F.Intrinsic.Control.If(V.Caller.Switches,=,"O")
+		F.Intrinsic.Control.CallSub(hook12010)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,12400)
+	'SO line exit
+	F.Intrinsic.Control.CallSub(hook12400)
+F.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+Program.Sub.Hook11560.Start
+'Approver Label
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PL",650)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PT",527)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PW",80)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PH",13)
+V.Passed.GAB-LBL-1.Set("Approver")
+
+'Approver Textbox
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PL",650)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PT",542)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PW",90)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PH",18)
+
+'Approved date label
+F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PL",760)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PT",527)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PW",80)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PH",13)
+V.Passed.GAB-LBL-2.Set("Approved Date")
+
+'Approved date Textbox
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PL",760)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PT",542)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PW",1000)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PH",18)
+
+'Approved label for checkbox
+F.Intrinsic.Variable.SetProperty("GAB-LBL-3","PL",668)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-3","PT",572)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-3","PW",50)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-3","PH",13)
+V.Passed.GAB-LBL-3.Set("Approved")
+
+'Approved Checkfield
+F.Intrinsic.Variable.SetProperty("GAB-CHK-1","PL",650)
+F.Intrinsic.Variable.SetProperty("GAB-CHK-1","PT",571)
+F.Intrinsic.Variable.SetProperty("GAB-CHK-1","PW",18)
+F.Intrinsic.Variable.SetProperty("GAB-CHK-1","PH",18)
+Program.Sub.Hook11560.End
+
+Program.Sub.Hook11565.Start
+V.Local.dDateOrder.Declare(Date)
+V.Local.sCustomer.Declare
+V.Local.sDateApproved.Declare
+V.Local.sSO.Declare
+V.Local.sSQL.Declare
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.LPad(V.Passed.000003,"0",7,V.Local.sSO)
+V.Local.sCustomer.Set(V.Passed.000006)
+F.Intrinsic.Date.ConvertDString(V.Passed.000023,"YYYYMmDd",V.Local.dDateOrder)
+'Check if SO has been approved
+F.Intrinsic.String.Build("select approver, approved_date from GAB_4862_APRVL where order_no = '{0}' and customer = '{1}' and date_order = '{2}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.FieldValTrim!approver,=,"")
+		'SO has not been approved
+		V.Passed.GAB-CHK-1.Set("N")
+		V.Passed.GAB-TEXT-1.Set("")
+		V.Passed.GAB-TEXT-2.Set("")
+		F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000079,"LOCK",1)
+		F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000085,"LOCK",1)
+		'When clicking print or email button, cancel the process
+		F.Intrinsic.Control.If(V.Caller.Hook,=,11780)
+			V.Passed.777777.Set(1)
+		F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,11890)
+			V.Passed.777777.Set(1)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Control.If(V.ODBC.conx!rst.FieldValTrim!approver,<>,"*REJECT*")
+		F.Intrinsic.Control.AndIf(V.ODBC.conx!rst.FieldValTrim!approver,<>,"*REVISE*")
+			'SO has been approved
+			V.Passed.GAB-CHK-1.Set("Y")
+			V.Passed.GAB-TEXT-1.Set(V.ODBC.conx!rst.FieldValTrim!approver)
+			F.Intrinsic.String.Format(V.ODBC.conx!rst.FieldVal!approved_date,"D MMM YYYY",V.Local.sDateApproved)
+			V.Passed.GAB-TEXT-2.Set(V.Local.sDateApproved)
+			F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000079,"LOCK",0)
+			F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000085,"LOCK",0)
+		F.Intrinsic.Control.Else
+			'SO was rejected/revised
+			V.Passed.GAB-CHK-1.Set("N")
+			V.Passed.GAB-TEXT-1.Set("")
+			V.Passed.GAB-TEXT-2.Set("")
+			F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000079,"LOCK",1)
+			F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000085,"LOCK",1)
+			'When clicking print or email button, cancel the process
+			F.Intrinsic.Control.If(V.Caller.Hook,=,11780)
+				V.Passed.777777.Set(1)
+			F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,11890)
+				V.Passed.777777.Set(1)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+	V.Passed.GAB-CHK-1.Set("N")
+	V.Passed.GAB-TEXT-1.Set("")
+	V.Passed.GAB-TEXT-2.Set("")
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000079,"LOCK",1)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000085,"LOCK",1)
+	'When clicking print or email button, cancel the process
+	F.Intrinsic.Control.If(V.Caller.Hook,=,11780)
+		V.Passed.777777.Set(1)
+	F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,11890)
+		V.Passed.777777.Set(1)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rst.Close
+
+F.ODBC.Connection!conx.Close
+Program.Sub.Hook11565.End
+
+Program.Sub.Hook11872.Start
+V.Local.dDateOrder.Declare(Date)
+V.Local.fAmt.Declare
+V.Local.sCustomer.Declare
+V.Local.sSO.Declare
+V.Local.sSQL.Declare
+V.Local.sUserID.Declare
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.LPad(V.Passed.000003,"0",7,V.Local.sSO)
+'Retrieve customer
+V.Local.sCustomer.Set(V.Passed.000006)
+V.Local.sUserID.Set(V.Caller.User)
+F.Intrinsic.Date.ConvertDString(V.Passed.000023,"YYYYMmDd",V.Local.dDateOrder)
+
+F.Intrinsic.Control.If(V.Caller.Switches,=,"N")
+	'New sales order entry
+	'Enter the main info of the sales order into GAB_4862_APRVL
+	
+	'Need approval
+	'Check if SO has been recorded in custom table. If not, create the basic record
+	F.Intrinsic.String.Build("select * from GAB_4862_APRVL where order_no = '{0}' and customer = '{1}' and date_order = '{2}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+		F.Intrinsic.String.Build("insert into GAB_4862_APRVL(order_no,customer,amount,date_order,date_due,originator,approver) values('{0}','{1}',0,'{3}','1900-01-01','{2}','')",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.sUserID.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+		F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+		'Set the order on shipping hold
+		F.Intrinsic.String.Build("update order_header set shp_hld_flag = '04' where order_no = '{0}' and record_type = 'A'",V.Local.sSO.Trim,V.Local.sSQL)
+		F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.Close
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!conx.Close
+Program.Sub.Hook11872.End
+
+Program.Sub.SumSOAmount.Start
+V.Local.fExtension.Declare
+V.Local.sSQL.Declare
+
+'Get the total SO amount before any taxes
+F.Intrinsic.String.Build("select sum(qty_ordered * discount_price) from v_order_lines where order_no = '{0}'",V.Args.sSO,V.Local.sSQL)
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSQL,V.Local.fExtension)
+F.Intrinsic.Math.Add(V.Local.fExtension,0,V.Local.fExtension)
+F.Intrinsic.Variable.AddRV("fAmt",V.Local.fExtension)
+Program.Sub.SumSOAmount.End
+
+Program.Sub.CheckLimit.Start
+V.Local.sSQL.Declare
+V.Local.sUserID.Declare
+
+'Get the user approval limit
+V.Local.sUserID.Set(V.Caller.User)
+F.Intrinsic.String.Build("select APPROVAL_LIMIT from GAB_4862_DOL_LMT where gs_user = '{0}'",V.Local.sUserID.Trim,V.Local.sSQL)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rstLimit",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rstLimit.EOF,=,True)
+	F.Intrinsic.UI.Msgbox("You have not been set as an Originator for SO approval. Please info your administrator so this SO can later be approved.","SO Approval [APAC]")
+	V.Global.fLimit.Set(-1)
+F.Intrinsic.Control.Else
+	V.Global.fLimit.Set(V.ODBC.conx!rstLimit.FieldValFloat!APPROVAL_LIMIT)
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rstLimit.Close
+Program.Sub.CheckLimit.End
+
+Program.Sub.Hook12400.Start
+V.Local.bExist.Declare
+V.Local.dDateDue.Declare(Date)
+V.Local.dDateOrder.Declare(Date)
+V.Local.fAmtAfter.Declare
+V.Local.fAmtBefore.Declare
+V.Local.sApprovedDate.Declare
+V.Local.sApprover.Declare
+V.Local.sCustomer.Declare
+V.Local.sDate.Declare
+V.Local.sFile.Declare
+V.Local.sFilename.Declare
+V.Local.sSO.Declare
+V.Local.sSQL.Declare
+V.Local.sUserID.Declare
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.LPad(V.Passed.000060,"0",7,V.Local.sSO)
+
+'Get total amount and user's limit
+F.Intrinsic.Control.CallSub(sumsoamount,"sSO",V.Local.sSO.Trim)
+V.Local.fAmtAfter.Set(V.Args.fAmt)
+F.Intrinsic.Control.CallSub(checklimit)
+V.Local.sUserID.Set(V.Caller.User)
+
+'Retrieve order header due date and customer
+F.Intrinsic.String.Build("select customer,date_order,date_due from v_order_header where order_no = '{0}'",V.Local.sSO.Trim,V.Local.sSQL)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+V.Local.sCustomer.Set(V.ODBC.conx!rst.FieldValTrim!customer)
+V.Local.dDateDue.Set(V.ODBC.conx!rst.FieldVal!date_due)
+V.Local.dDateOrder.Set(V.ODBC.conx!rst.FieldVal!date_order)
+F.ODBC.conx!rst.Close
+
+'Check if SO has been recorded in custom table. If not, create the basic record
+F.Intrinsic.String.Build("select * from GAB_4862_APRVL where order_no = '{0}' and customer = '{1}' and date_order = '{2}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+	F.Intrinsic.String.Build("insert into GAB_4862_APRVL(order_no,customer,amount,date_order,date_due,originator,approver) values('{0}','{1}',0,'{3}','1900-01-01','{2}','')",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.sUserID.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+	F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rst.Close
+
+F.Intrinsic.Control.If(V.Caller.Switches,=,"N")
+	'New sales order entry
+	
+	F.Intrinsic.Control.If(V.Local.fAmtAfter,>,V.Global.fLimit)
+		'Requiring approval, update amount and due date
+		F.Intrinsic.String.Build("update GAB_4862_APRVL set amount={2},date_due='{3}' where order_no = '{0}' and customer = '{1}' and date_order = '{4}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.fAmtAfter,V.Local.dDateDue.PervasiveDate,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+		F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+		'Set the order on shipping hold
+		F.Intrinsic.String.Build("update order_header set shp_hld_flag = '04' where order_no = '{0}' and record_type = 'A'",V.Local.sSO.Trim,V.Local.sSQL)
+		F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+	F.Intrinsic.Control.Else
+		'Within the amount limit, approve SO automatically
+'		F.Intrinsic.Control.If(V.Local.fAmtAfter,>,0)
+			F.Intrinsic.String.Format(V.Ambient.Now,"YYYY-MM-DD HH:NN:SS",V.Local.sApprovedDate)
+			F.Intrinsic.String.Build("update GAB_4862_APRVL set amount={2},date_due='{3}',approver='{4}',approved_date='{5}' where order_no = '{0}' and customer = '{1}' and date_order = '{6}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.fAmtAfter,V.Local.dDateDue.PervasiveDate,V.Local.sUserID.Trim,V.Local.sApprovedDate.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+			F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+			'Release the order shipping hold
+			F.Intrinsic.String.Build("update order_header set shp_hld_flag = '01' where order_no = '{0}' and record_type = 'A'",V.Local.sSO.Trim,V.Local.sSQL)
+			F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+'		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.ElseIf(V.Caller.Switches,=,"O")
+	'Retrieve SO amount from SO line populate hook
+	F.Intrinsic.String.Format(V.Ambient.Date,"YYYYMMDD",V.Local.sDate)
+	F.Intrinsic.String.Concat(V.System.Temp,"\GSS\GAB_",V.Caller.User,"_",V.Local.sDate,"_SO_APPROVAL.txt",V.Local.sFileName)
+	F.Intrinsic.File.Exists(V.Local.sFilename,V.Local.bExist)
+	F.Intrinsic.Control.If(V.Local.bExist,=,True)
+		'If text file exists
+		F.Intrinsic.File.File2String(V.Local.sFilename,V.Local.sFile)
+		F.Intrinsic.Math.ConvertToFloat(V.Local.sFile,V.Local.fAmtBefore)
+	F.Intrinsic.Control.Else
+		V.Local.fAmtBefore.Set(-1)
+	F.Intrinsic.Control.EndIf
+		
+	F.Intrinsic.Control.If(V.Local.fAmtAfter,<>,V.Local.fAmtBefore)
+		'If total SO amount changes
+		F.Intrinsic.Control.If(V.Local.fAmtAfter,>,V.Global.fLimit)
+			F.Intrinsic.String.Build("select approver, approved_date from GAB_4862_APRVL where order_no = '{0}' and customer = '{1}' and date_order = '{2}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+			F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.FieldValTrim!approver,<>,"")
+			F.Intrinsic.Control.AndIf(V.ODBC.conx!rst.FieldValTrim!approver,<>,"*REVISE*")
+				V.Local.sApprover.Set(V.ODBC.conx!rst.FieldValTrim!approver)
+				'SO has been approved/rejected previously, remove approver
+				F.Intrinsic.String.Format(V.Ambient.Now,"YYYY-MM-DD HH:NN:SS",V.Local.sApprovedDate)
+				F.Intrinsic.String.Build("update GAB_4862_APRVL set amount={2},date_due='{3}',approver='*REVISE*',approved_date='{4}' where order_no = '{0}' and customer = '{1}' and date_order = '{5}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.fAmtAfter,V.Local.dDateDue.PervasiveDate,V.Local.sApprovedDate.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+				F.Intrinsic.Control.CallSub(sendmessagerevised,"sSO",V.Local.sSO,"fAmtAfter",V.Local.fAmtAfter,"fAmtBefore",V.Local.fAmtBefore,"sApprover",V.Local.sApprover)
+			F.Intrinsic.Control.Else
+				'Requiring approval, update amount and due date
+				F.Intrinsic.String.Build("update GAB_4862_APRVL set amount={2},date_due='{3}' where order_no = '{0}' and customer = '{1}' and m_type = 3",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.fAmtAfter,V.Local.dDateDue.PervasiveDate,V.Local.sSQL)
+			F.Intrinsic.Control.EndIf
+			F.ODBC.conx!rst.Close
+			F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+			'Set the order on shipping hold
+			F.Intrinsic.String.Build("update order_header set shp_hld_flag = '04' where order_no = '{0}' and record_type = 'A'",V.Local.sSO.Trim,V.Local.sSQL)
+			F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+		F.Intrinsic.Control.Else
+			'Within the amount limit, approve SO automatically
+			F.Intrinsic.String.Format(V.Ambient.Now,"YYYY-MM-DD HH:NN:SS",V.Local.sApprovedDate)
+			F.Intrinsic.String.Build("update GAB_4862_APRVL set amount={2},date_due='{3}',approver='{4}',approved_date='{5}' where order_no = '{0}' and customer = '{1}' and date_order = '{6}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.fAmtAfter,V.Local.dDateDue.PervasiveDate,V.Local.sUserID.Trim,V.Local.sApprovedDate.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+			F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+			'Release the order shipping hold
+			F.Intrinsic.String.Build("update order_header set shp_hld_flag = '01' where order_no = '{0}' and record_type = 'A'",V.Local.sSO.Trim,V.Local.sSQL)
+			F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!conx.Close
+Program.Sub.Hook12400.End
+
+Program.Sub.Hook11882.Start
+V.Local.dDateOrder.Declare(Date)
+V.Local.sCustomer.Declare
+V.Local.sSO.Declare
+V.Local.sSQL.Declare
+V.Local.sUserID.Declare
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.LPad(V.Passed.000003,"0",7,V.Local.sSO)
+'Retrieve customer
+V.Local.sCustomer.Set(V.Passed.000006)
+V.Local.sUserID.Set(V.Caller.User)
+F.Intrinsic.Date.ConvertDString(V.Passed.000023,"YYYYMmDd",V.Local.dDateOrder)
+
+F.Intrinsic.Control.If(V.Caller.Switches,=,"N")
+	'Canceling new sales order entry, remove record from GAB_4862_APRVL
+	F.Intrinsic.String.Build("select * from GAB_4862_APRVL where order_no = '{0}' and customer = '{1}' and originator = '{2}' and date_order = '{3}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.sUserID.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+		F.Intrinsic.String.Build("delete from GAB_4862_APRVL where order_no = '{0}' and customer = '{1}' and originator = '{2}' and date_order = '{3}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.sUserID.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+		F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.Close
+F.Intrinsic.Control.Else
+	'Sales order is deleted
+	F.Intrinsic.String.Build("select * from GAB_4862_APRVL where order_no = '{0}' and customer = '{1}' and date_order = '{2}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+		F.Intrinsic.String.Build("delete from GAB_4862_APRVL where order_no = '{0}' and customer = '{1}' and date_order = '{2}'",V.Local.sSO.Trim,V.Local.sCustomer.Trim,V.Local.dDateOrder.PervasiveDate,V.Local.sSQL)
+		F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.Close
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!conx.Close
+Program.Sub.Hook11882.End
+
+Program.Sub.Hook12010.Start
+V.Local.fAmt.Declare
+V.Local.sDate.Declare
+V.Local.sFilename.Declare
+V.Local.sSO.Declare
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.LPad(V.Passed.000060,"0",7,V.Local.sSO)
+'Get total amount and user's limit
+F.Intrinsic.Control.CallSub(sumsoamount,"sSO",V.Local.sSO.Trim)
+V.Local.fAmt.Set(V.Args.fAmt)
+
+'Store total SO amount before editing SO
+F.Intrinsic.String.Format(V.Ambient.Date,"YYYYMMDD",V.Local.sDate)
+F.Intrinsic.String.Concat(V.System.Temp,"\GSS\GAB_",V.Caller.User,"_",V.Local.sDate,"_SO_APPROVAL.txt",V.Local.sFileName)
+F.Intrinsic.File.String2File(V.Local.sFileName,V.Local.fAmt)
+
+F.ODBC.Connection!conx.Close
+Program.Sub.Hook12010.End
+
+Program.Sub.SendMessageRevised.Start
+V.Local.iMsgID.Declare
+V.Local.iRet.Declare
+V.Local.iUserR.Declare
+V.Local.iUserS.Declare
+
+V.Local.sApprover.Declare
+V.Local.sAmtAfter.Declare
+V.Local.sAmtBefore.Declare
+V.Local.sEmail.Declare
+V.Local.sMessage.Declare
+V.Local.sName.Declare
+V.Local.sOrigName.Declare
+V.Local.sSO.Declare
+V.Local.sSubject.Declare
+V.Local.sUserEmail.Declare
+
+V.Local.sSO.Set(V.Args.sSO)
+V.Local.sApprover.Set(V.Args.sApprover)
+
+F.Intrinsic.String.Concat("User ID: ",V.Caller.User,V.Ambient.NewLine,V.Local.sMessage)
+F.Global.Security.GetFullName(V.Caller.User,V.Local.sName)
+F.Intrinsic.String.Concat(V.Local.sMessage,"User Name: ",V.Local.sName,V.Ambient.NewLine,V.Local.sMessage)
+F.Intrinsic.String.Concat(V.Local.sMessage,"SO No.: ",V.Local.sSO,V.Ambient.NewLine,V.Local.sMessage)
+F.Intrinsic.String.Format(V.Args.fAmtBefore,"#,0.00",V.Local.sAmtBefore)
+F.Intrinsic.String.Format(V.Args.fAmtAfter,"#,0.00",V.Local.sAmtAfter)
+F.Intrinsic.String.Concat(V.Local.sMessage,"PO amount changes from ",V.Local.sAmtBefore," to ",V.Local.sAmtAfter,V.Local.sMessage)
+
+F.Intrinsic.String.Concat("SO ",V.Local.sSO.Trim," Needs Re-approval",V.Local.sSubject)
+
+'Get Sender's User ID
+Function.Global.Security.GetUserID(V.Caller.User,V.Caller.CompanyCode,V.Local.iUserS)
+Function.Global.Security.GetUserID(V.Local.sApprover.Trim,V.Caller.CompanyCode,V.Local.iUserR)
+
+'send a message that the SO requires re-approval
+F.Global.Messaging.InternalMessageCreate(-1,V.Ambient.Date,V.Local.iUserS.Trim,V.Local.sSubject,V.Local.sMessage,V.Local.iMsgID)
+F.Global.Messaging.InternalMessageQueueToUser(V.Local.iUserR,V.Local.iMsgID)
+
+'if courier is running, send an email that the SO requires re-approval
+F.Global.Messaging.isCourierRunning(V.Local.iRet)
+F.Intrinsic.Control.If(V.Local.iRet,<>,0)
+	F.Global.Security.GetUserEmail(V.Local.sApprover.Trim,V.Caller.CompanyCode,V.Local.sEmail)
+	F.Global.Security.GetFullName(V.Local.sApprover.Trim,V.Caller.CompanyCode,V.Local.sName)
+	F.Global.Security.GetUserEmail(V.Caller.User,V.Caller.CompanyCode,V.Local.sUserEmail)
+	F.Global.Security.GetFullName(V.Caller.User,V.Caller.CompanyCode,V.Local.sOrigName)
+
+	F.Global.Messaging.CreateEMMessage(V.Local.sEmail,V.Local.sName,V.Local.sUserEmail,V.Local.sOrigName,V.Local.sSubject,V.Local.sMessage)
+F.Intrinsic.Control.EndIf
+Program.Sub.SendMessageRevised.End
+
+Program.Sub.Comments.Start
+${$0$}$SO Approval Request$}$MHERTANTO$}$15/11/2017 2:50:03 PM$}$False
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$This program checks if sales order requires approval and prevents sales order from being printed and shipped.
+${$5$}$2.0.0.0$}$2
+${$6$}$wnichols$}$20210614105923328$}$h3jCD/nJ6bE/cd0Fx7GbYZBAEscRS8LBO2yOYISFOEkMAAOtnjOPhJk0dxv9IWmCKhflU4b7go9BJHF93SPkmQ==
+Program.Sub.Comments.End
