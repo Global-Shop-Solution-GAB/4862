@@ -1,0 +1,670 @@
+Program.Sub.ScreenSU.Start
+Gui.F_Reject..create
+Gui.F_Reject..caption("Reason for Rejection")
+Gui.F_Reject..size(8790,2925)
+Gui.F_Reject..minx(0)
+Gui.F_Reject..miny(0)
+Gui.F_Reject..position(0,0)
+Gui.F_Reject..forecolor(0)
+Gui.F_Reject..BackColor(-2147483633)
+Gui.F_Reject..mousepointer(0)
+Gui.F_Reject..Event(UnLoad,F_Reject_Unload)
+Gui.F_Reject.mltxt1.create(textboxm)
+Gui.F_Reject.mltxt1.size(6495,1995)
+Gui.F_Reject.mltxt1.position(195,195)
+Gui.F_Reject.mltxt1.fontsize(9)
+Gui.F_Reject.mltxt1.defaultvalue("")
+Gui.F_Reject.cmdSend.create(button)
+Gui.F_Reject.cmdSend.caption("Send")
+Gui.F_Reject.cmdSend.size(1425,540)
+Gui.F_Reject.cmdSend.position(6900,180)
+Gui.F_Reject.cmdSend.fontsize(9)
+Gui.F_Reject.cmdSend.event(Click,cmdsend_click)
+Gui.F_Reject.cmdSend.defaultvalue("")
+Gui.F_Approval..create
+Gui.F_Approval..caption("Sales Order Requiring Approval")
+Gui.F_Approval..size(14700,8670)
+Gui.F_Approval..minx(0)
+Gui.F_Approval..miny(0)
+Gui.F_Approval..position(0,0)
+Gui.F_Approval..event(UnLoad,Unload)
+Gui.F_Approval..forecolor(0)
+Gui.F_Approval..fontstyle(False,False,False,False)
+Gui.F_Approval..BackColor(-2147483633)
+Gui.F_Approval..mousepointer(0)
+Gui.F_Approval..sizeable(False)
+Gui.F_Approval.cmdRefresh.create(button)
+Gui.F_Approval.cmdRefresh.caption("REFRESH")
+Gui.F_Approval.cmdRefresh.size(1350,570)
+Gui.F_Approval.cmdRefresh.position(13065,90)
+Gui.F_Approval.cmdRefresh.defaultvalue("")
+Gui.F_Approval.cmdRefresh.Event(Click,LoadApprovalList)
+Gui.F_Approval.GsGCApproval.Create(GsGridControl)
+Gui.F_Approval.GsGCApproval.Size(14295,6825)
+Gui.F_Approval.GsGCApproval.Position(105,1275)
+Gui.F_Approval.GsGCApproval.Event(RowCellClick,GridApproveReject)
+Gui.F_Approval.picGSSLogo.Create(PictureBox)
+Gui.F_Approval.picGSSLogo.Size(4125,960)
+Gui.F_Approval.picGSSLogo.Position(105,90)
+Gui.F_ReviewSO..create
+Gui.F_ReviewSO..caption("PO Review")
+Gui.F_ReviewSO..size(19410,5775)
+Gui.F_ReviewSO..minx(0)
+Gui.F_ReviewSO..miny(0)
+Gui.F_ReviewSO..position(0,0)
+Gui.F_ReviewSO..event(UnLoad,CloseSOReview)
+Gui.F_ReviewSO..forecolor(0)
+Gui.F_ReviewSO..BackColor(-2147483633)
+Gui.F_ReviewSO..mousepointer(0)
+Gui.F_ReviewSO..sizeable(False)
+Gui.F_ReviewSO.lbl1.create(label,"Customer Currency:",True,1815,255,1,120,165,True,0,Arial,9,-2147483633,0)
+Gui.F_ReviewSO.lbl1.defaultvalue("")
+Gui.F_ReviewSO.txtCurr.create(textbox,"",True,840,315,0,1950,90,False,2,Arial,9,-2147483643,1)
+Gui.F_ReviewSO.txtCurr.defaultvalue("")
+Gui.F_ReviewSO.lblCustomer.create(label,"Total Order Extension:",True,2175,255,1,8130,180,True,1,Arial,9,-2147483633,0)
+Gui.F_ReviewSO.lblCustomer.defaultvalue("")
+Gui.F_ReviewSO.txtCustExt.create(textbox,"",True,2475,315,0,10380,90,False,1,Arial,9,-2147483643,1)
+Gui.F_ReviewSO.txtCustExt.defaultvalue("")
+Gui.F_ReviewSO.lblBase.create(label,"Total Base Extension:",True,2100,255,1,14415,195,True,1,Arial,9,-2147483633,0)
+Gui.F_ReviewSO.lblBase.defaultvalue("")
+Gui.F_ReviewSO.txtBaseExt.create(textbox,"",True,2475,315,0,16590,105,False,1,Arial,9,-2147483643,1)
+Gui.F_ReviewSO.txtBaseExt.defaultvalue("")
+Gui.F_ReviewSO.GsGCSO.Create(GsGridControl)
+Gui.F_ReviewSO.GsGCSO.Size(18960,4545)
+Gui.F_ReviewSO.GsGCSO.Position(105,495)
+Gui.F_ReviewSO.GsGCSO.Event(RowCellClick,gvSO_click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+V.Global.dDateOrder.Declare(Date)
+V.Global.iRReject.Declare
+V.Global.sOrig.Declare
+V.Global.sSO.Declare
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+V.Local.sGSSLogo.Declare
+V.Local.sIconPath.Declare
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.Concat(V.Caller.GlobalDir,"\ART\gss2.ico",V.Local.sIconPath)
+F.Intrinsic.String.Concat(V.Caller.GlobalDir,"\ART\GAB_GSS_Logo_Green_Dash.png",V.Local.sGSSLogo)
+Gui.F_Approval.picGSSLogo.Picture(V.Local.sGSSLogo)
+Gui.F_Approval..Icon(V.Local.sIconPath)
+Gui.F_ReviewSO..Icon(V.Local.sIconPath)
+Gui.F_Reject..Icon(V.Local.sIconPath)
+F.Intrinsic.UI.InvokeWaitDialog("Loading list of sales orders requiring approval")
+F.Intrinsic.Control.CallSub(Loadapprovallist)
+Gui.F_Approval.GsGCApproval.Anchor(15)
+Gui.F_ReviewSO.GsGCSO.Anchor(15)
+Gui.F_Approval..Show
+F.Intrinsic.UI.CloseWaitDialog
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+Program.Sub.LoadApprovalList.Start
+V.Local.fLimit.Declare
+
+V.Local.i1.Declare
+
+V.Local.sFilter.Declare
+V.Local.sQuery.Declare
+V.Local.sRet.Declare
+V.Local.sUser.Declare
+
+V.Local.sUser.Set(V.Caller.User)
+
+F.Intrinsic.String.Build("SELECT GS_USER FROM GAB_4862_APRVRS WHERE APPROVER = '{0}'",V.Local.sUser.Trim,V.Local.sQuery)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rstUser",V.Local.sQuery)
+F.Intrinsic.Control.If(V.ODBC.conx!rstUser.EOF,=,True)
+	F.Intrinsic.UI.Msgbox("You are not set as an approver","SO Approval [APAC]")
+	F.Intrinsic.Control.CallSub(Unload)
+F.Intrinsic.Control.Else
+	Gui.F_Approval.GsGCApproval.visible(False)
+	F.Intrinsic.Control.If(V.DataTable.dtDash.Exists,=,True)
+		F.Data.DataTable.close("dtDash")
+	F.Intrinsic.Control.EndIf
+	F.Data.DataTable.Create("dtDash",True)
+	F.Data.DataTable.AddColumn("dtDash","SO","String")
+	F.Data.DataTable.AddColumn("dtDash","Customer","String")
+	F.Data.DataTable.AddColumn("dtDash","Name","String")
+	F.Data.DataTable.AddColumn("dtDash","Amount","Float")
+	F.Data.DataTable.AddColumn("dtDash","Date_Order","Date")
+	F.Data.DataTable.AddColumn("dtDash","Date_Due","Date")
+	F.Data.DataTable.AddColumn("dtDash","Originator","String")
+	F.Data.DataTable.AddColumn("dtDash","Approve","String")
+	F.Data.DataTable.AddColumn("dtDash","Reject","String")
+
+	'Load all originators that need approval from this user
+	F.Intrinsic.Control.DoUntil(V.ODBC.conx!rstUser.EOF,=,True)
+		F.Intrinsic.String.Build("SELECT order_no as SO, customer as Customer, ' ' as Name, Amount as Amount, date_order as Date_Order, Date_Due as Date_Due, Originator as Originator, Approver as Approve FROM GAB_4862_APRVL WHERE RTRIM(ORIGINATOR) = '{0}' AND (APPROVER IS NULL or approver = '' or approver = '*REVISE*')",V.ODBC.conx!rstUser.FieldValTrim!GS_USER,V.Local.sQuery)
+		F.Data.DataTable.CreateFromSQL("dtApproval","Conx",V.Local.sQuery,True)
+		F.Data.DataTable.Merge("dtApproval","dtDash",True,1)
+		F.Data.DataTable.Close("dtApproval")
+		F.ODBC.conx!rstUser.MoveNext
+	F.Intrinsic.Control.Loop
+	'Get vendor name
+	F.Data.Dictionary.CreateFromSQL("dicCustomer","conx","select rtrim(customer), name_customer from v_customer_master")
+	F.Data.Dictionary.SetDefaultReturn("dicCustomer","***CUSTOMER NAME NOT FOUND***")
+	F.Data.DataTable.FillFromDictionary("dtDash","dicCustomer","Customer","Name")
+	F.Data.Dictionary.Close("dicCustomer")
+	F.Data.DataView.Create("dtDash","dvDash",22,"","Date_Due ASC")
+	Gui.F_Approval.GsGCApproval.AddGridviewFromDataview("gvDash","dtDash","dvDash")
+	Gui.F_Approval.GsGCApproval.MainView("gvDash")
+	F.Intrinsic.Control.CallSub(gvdashproperties)
+	Gui.F_Approval.GsGCApproval.visible(True)
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rstUser.Close
+Program.Sub.LoadApprovalList.End
+
+Program.Sub.gvDashProperties.Start
+V.Local.i1.Declare
+
+Gui.F_Approval.GsGCApproval.ColumnEdit("gvDash","Approve","EditorButton","Approve")
+Gui.F_Approval.GsGCApproval.ColumnEdit("gvDash","Reject","EditorButton","Reject")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Approve","ShowCaption",False)
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Reject","ShowCaption",False)
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Customer","Visible",False)
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Name","Caption","Customer")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Order","Caption","Order Date")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Due","Caption","Due Date")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","SO","HeaderHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Name","HeaderHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Amount","HeaderHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Order","HeaderHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Due","HeaderHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Originator","HeaderHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","SO","CellHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Order","CellHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Due","CellHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Originator","CellHAlignment","Center")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Amount","DisplayCustomNumeric","##,###,##0.00")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Order","DisplayCustomDatetime","d")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Due","DisplayCustomDatetime","d")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","SO","MinWidth","90")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Name","MinWidth","250")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Amount","MinWidth","120")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Order","MinWidth","90")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Date_Due","MinWidth","90")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Originator","MinWidth","100")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Approve","MinWidth","70")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Reject","MinWidth","70")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","SO","CellFontUnderline",True)
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","SO","CellForeColor",V.Color.Blue)
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","SO","AllowEdit",False)
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Approve","AllowEdit",False)
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Reject","AllowEdit",False)
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Approve","Fixed","Right")
+Gui.F_Approval.GsGCApproval.SetColumnProperty("gvDash","Reject","Fixed","Right")
+
+F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtDash.RowCount--,2)
+	Gui.F_Approval.GsGCApproval.SetRowAppearance("gvDash",V.Local.i1,"backcolor","aliceblue")
+F.Intrinsic.Control.Next(V.Local.i1)
+
+F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtDash.RowCount--,1)
+	F.Intrinsic.Control.If(V.DataTable.dtDash(V.Local.i1).Approve!FieldValTrim,=,"*REVISE*")
+		Gui.F_Approval.GsGCApproval.SetRowAppearance("gvDash",V.Local.i1,"backcolor",V.Color.Orange)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.i1)
+Program.Sub.gvDashProperties.End
+
+Program.Sub.F_Reject_Unload.Start
+Gui.F_Reject.mltxt1.Text("")
+Gui.F_Reject..Visible(False)
+Gui.F_Approval..Visible(False)
+Gui.F_Approval..Visible(True)
+Program.Sub.F_Reject_Unload.End
+
+Program.Sub.cmdSend_Click.Start
+V.Local.iRet.Declare(Long)
+V.Local.iUserS.Declare(Long)
+V.Local.iUserR.Declare(Long)
+V.Local.iMsgID.Declare(Long)
+
+V.Local.sApprover.Declare(String)
+V.Local.sDueDatePCC.Declare(String)
+V.Local.sDueDateScreen.Declare(String)
+V.Local.sEmail.Declare(String)
+V.Local.sMessage.Declare(String)
+V.Local.sName.Declare(String)
+V.Local.sOrigEmail.Declare(String)
+V.Local.sOrigName.Declare(String)
+V.Local.sPO.Declare(String)
+V.Local.sPOLine.Declare(String)
+V.Local.sQuery.Declare(String)
+V.Local.sReason.Declare(String)
+V.Local.sSubject.Declare(String)
+V.Local.sUserEmail.Declare(String)
+
+V.Local.sReason.Set(V.Screen.F_Reject!mltxt1.Text)
+
+F.Intrinsic.String.Concat("User ID: ",V.Caller.User,V.Ambient.NewLine,V.Local.sMessage)
+F.Global.Security.GetFullName(V.Caller.User,V.Local.sName)
+F.Intrinsic.String.Concat(V.Local.sMessage,"User Name: ",V.Local.sName,V.Ambient.NewLine,V.Local.sMessage)
+F.Intrinsic.String.Concat(V.Local.sMessage,"SO No.: ",V.Global.sSO,V.Ambient.NewLine,V.Local.sMessage)
+F.Intrinsic.String.Concat(V.Local.sMessage,"Reason: ",V.Local.sReason,V.Local.sMessage)
+
+F.Intrinsic.String.Concat("SO ",V.Global.sSO.Trim," Rejected",V.Local.sSubject)
+
+'Get Sender's User ID
+Function.Global.Security.GetUserID(V.Caller.User,V.Caller.CompanyCode,V.Local.iUserS)
+Function.Global.Security.GetUserID(V.Global.sOrig.Trim,V.Caller.CompanyCode,V.Local.iUserR)
+
+'send a message that the PO has been approved
+F.Global.Messaging.InternalMessageCreate(-1,V.Ambient.Date,V.Local.iUserS.Trim,V.Local.sSubject,V.Local.sMessage,V.Local.iMsgID)
+F.Global.Messaging.InternalMessageQueueToUser(V.Local.iUserR,V.Local.iMsgID)
+
+'F.Global.Messaging.CreateInternalMessage(V.Global.sOrigSelect.Trim,V.Local.sMessage)
+
+F.Global.Messaging.isCourierRunning(V.Local.iRet)
+F.Intrinsic.Control.If(V.Local.iRet,<>,0)
+	F.Global.Security.GetUserEmail(V.Global.sOrig.Trim,V.Caller.CompanyCode,V.Local.sOrigEmail)
+	F.Global.Security.GetFullName(V.Global.sOrig.Trim,V.Caller.CompanyCode,V.Local.sOrigName)
+	F.Global.Security.GetUserEmail(V.Caller.User,V.Caller.CompanyCode,V.Local.sEmail)
+	F.Global.Security.GetFullName(V.Caller.User,V.Caller.CompanyCode,V.Local.sName)
+
+	F.Global.Messaging.CreateEMMessage(V.Local.sOrigEmail,V.Local.sOrigName,V.Local.sEmail,V.Local.sName,V.Local.sSubject,V.Local.sMessage)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.String.Format(V.Ambient.Now,"YYYY-MM-DD HH:NN:SS",V.Local.sName)
+F.Intrinsic.String.Build("update GAB_4862_APRVL set approver = '*REJECT*', approved_date = '{1}' where order_no = '{0}' AND date_order = '{2}'",V.Global.sSO.Trim,V.Local.sName.Trim,V.Global.dDateOrder.PervasiveDate,V.Local.sQuery)
+F.ODBC.Connection!conx.Execute(V.Local.sQuery)
+
+'Set the order on shipping hold
+F.Intrinsic.String.Build("update order_header set shp_hld_flag = '04' where order_no = '{0}' and record_type = 'A'",V.Global.sSO.Trim,V.Local.sSQL)
+F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+
+F.Data.DataTable.DeleteRow("dtDash",V.Global.iRReject)
+Gui.F_Reject.mltxt1.Text("")
+Gui.F_Reject..Visible(False)
+Gui.F_Approval..Visible(False)
+Gui.F_Approval..Visible(True)
+Program.Sub.cmdSend_Click.End
+
+Program.Sub.GridApproveReject.Start
+V.Local.iRet.Declare
+V.Local.iRow.Declare
+V.Local.sMessage.Declare
+V.Global.sSO.Set(V.DataTable.dtDash(V.Args.RowIndex).SO!FieldValTrim)
+V.Global.dDateOrder.Set(V.DataTable.dtDash(V.Args.RowIndex).Date_Order!FieldVal)
+F.Intrinsic.Control.If(V.Args.Column,=,"Approve")
+	F.Intrinsic.string.Build("Do you want to approve SO {0}?",V.Global.sSO.Trim,V.Local.sMessage)
+	F.Intrinsic.UI.Msgbox(V.Local.sMessage,"SO Approval List",4,V.Local.iRet)
+	F.Intrinsic.Control.If(V.Local.iRet,=,6)
+		F.Intrinsic.Control.CallSub(Approve)
+		'Remove the row from the grid
+		F.Data.DataTable.DeleteRow("dtDash",V.Args.RowIndex)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.ElseIf(V.Args.Column,=,"Reject")
+	V.Global.iRReject.Set(V.Args.RowIndex)
+	F.Intrinsic.Control.CallSub(Reject)
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.CallSub(opensoreview,"iRow",V.Args.RowIndex)
+F.Intrinsic.Control.EndIf
+Program.Sub.GridApproveReject.End
+
+Program.Sub.CloseSOReview.Start
+Gui.F_ReviewSO..Visible(False)
+Gui.F_Approval..Enabled(True)
+Gui.F_Approval..Visible(False)
+Gui.F_Approval..Visible(True)
+Program.Sub.CloseSOReview.End
+
+Program.Sub.gvSO_Click.Start
+V.Local.sParam.Declare
+V.Local.sRet.Declare
+F.Intrinsic.Control.If(V.Args.Column,=,"Description")
+	Gui.F_ReviewSO.GsGCSO.GetRowAppearance("gvSO",V.Args.RowIndex,"backcolor",V.Local.sRet)
+	F.Intrinsic.Control.If(V.Local.sRet.Trim,<>,"fffc9c00")
+		F.Intrinsic.String.Build("{0}!*!{1}",V.DataTable.dtSO(V.Args.RowIndex).Part!FieldValTrim,V.DataTable.dtSO(V.Args.RowIndex).Loc!FieldValTrim,V.Local.sParam)
+		F.Global.General.CallWrapperSync(300010,V.Local.sParam)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.ElseIf(V.Args.Column,=,"Part")
+	Gui.F_ReviewSO.GsGCSO.GetRowAppearance("gvSO",V.Args.RowIndex,"backcolor",V.Local.sRet)
+	F.Intrinsic.Control.If(V.Local.sRet.Trim,<>,"fffc9c00")
+		F.Intrinsic.String.Build("{0}!*!{1}",V.DataTable.dtSO(V.Args.RowIndex).Part!FieldValTrim,V.DataTable.dtSO(V.Args.RowIndex).Loc!FieldValTrim,V.Local.sParam)
+		F.Global.General.CallWrapperSync(300010,V.Local.sParam)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+Program.Sub.gvSO_Click.End
+
+Program.Sub.Approve.Start
+V.Local.dDate.Declare(Date)
+
+V.Local.fLimit.Declare(Float)
+
+V.Local.iMsgID.Declare
+V.Local.iRet.Declare
+V.Local.iUserR.Declare
+V.Local.iUserS.Declare
+
+V.Local.sApprovedDate.Declare
+V.Local.sDate.Declare
+V.Local.sEmail.Declare
+V.Local.sMsg.Declare
+V.Local.sOrigName.Declare
+V.Local.sSQL.Declare
+V.Local.sSubject.Declare
+V.Local.sUserEmail.Declare
+V.Local.sUserName.Declare
+V.Local.sUser.Declare
+V.Local.sOriginator.Declare
+
+V.Local.sUser.Set(V.Caller.User)
+'Make sure that a PO was actually selected
+F.Intrinsic.Control.If(V.Global.sSO.Trim,<>,"0000000")
+	F.Intrinsic.Control.CallSub(sumsoamount)
+	
+	F.Intrinsic.String.Build("Select * from GAB_4862_DOL_LMT where GS_User = '{0}'",V.Local.sUser.Trim,V.Local.sSql)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rstLimit",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rstLimit.EOF,=,False)
+		V.Local.fLimit.Set(V.ODBC.conx!rstLimit.FieldValTrim!APPROVAL_LIMIT)
+	F.Intrinsic.Control.Else
+		V.Local.fLimit.Set(-1)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rstLimit.Close
+	
+	'Check if the total SO amount is within the limit of the user
+	F.Intrinsic.Control.If(V.Args.fAmt,>,V.Local.fLimit)
+		F.Intrinsic.UI.Msgbox("SO cannot be approved. Total SO amount is above your limit.","SO Approval [APAC]")
+		F.Intrinsic.Control.CallSub(Unload)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("Select ORIGINATOR, APPROVER, APPROVED_DATE from GAB_4862_APRVL where order_no = '{0}' and date_order = '{1}'",V.Global.sSO.Trim,V.Global.dDateOrder.PervasiveDate,V.Local.sSQL)
+		F.ODBC.Connection!conx.OpenLocalRecordsetRW("rst",V.Local.sSQL)
+		'Check if SO in the GCG_3531_APRVL_CERT table
+		F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+			F.Intrinsic.UI.Msgbox("SO is not in the approval list.","SO Approval [APAC]")
+			F.Intrinsic.Control.CallSub(Unload)
+		F.Intrinsic.Control.Else
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.FieldValTrim!APPROVER,<>,"")
+			F.Intrinsic.Control.AndIf(V.ODBC.conx!rst.FieldValTrim!APPROVER,<>,"*REVISE*")
+				F.Intrinsic.UI.Msgbox("SO has been approved.","SO Approval [APAC]")
+				F.Intrinsic.Control.CallSub(Unload)
+			F.Intrinsic.Control.Else
+				V.Local.sOriginator.Set(V.ODBC.conx!rst.FieldValTrim!ORIGINATOR)
+				
+				F.Intrinsic.String.Build("SELECT * FROM GAB_4862_APRVRS WHERE GS_USER = '{0}' AND APPROVER='{1}'",V.Local.sOriginator.trim,V.Local.sUser.Trim,V.Local.sSQL)
+				F.ODBC.Connection!conx.OpenLocalRecordsetRO("rstApp",V.Local.sSql)
+				'Check if the current user can approve the selected SO based on originator
+				F.Intrinsic.Control.If(V.ODBC.conx!rstApp.EOF,=,True)
+					F.Intrinsic.UI.Msgbox("You are not set to approve this SO.","SO Approval [APAC]")
+					F.Intrinsic.Control.CallSub(Unload)
+				F.Intrinsic.Control.Else
+					F.ODBC.conx!rst.Set!Approver(V.Local.sUser.Trim)
+					F.Intrinsic.String.Format(V.Ambient.Now,"YYYY-MM-DD HH:NN:SS",V.Local.sApprovedDate)
+					F.ODBC.conx!rst.Set!Approved_Date(V.Local.sApprovedDate)
+					F.ODBC.conx!rst.Update
+'					F.Intrinsic.Control.If(V.Caller.Hook,=,16890)
+'						V.Passed.GAB-TEXT-1.Set(V.Caller.User)
+'						F.Intrinsic.String.Format(V.Local.dDate,"D MM YYYY",V.Local.sDate)
+'						V.Passed.GAB-TEXT-2.Set(V.Local.sDate)
+'						V.Passed.GAB-CHK-1.Set("Y")
+'					F.Intrinsic.Control.EndIf
+					
+					'Release shipping hold
+					F.Intrinsic.String.Build("update order_header set shp_hld_flag = '00' where order_no = '{0}' and record_type = 'A'",V.Global.sSO.Trim,V.Local.sSQL)
+					F.ODBC.Connection!conx.Execute(V.Local.sSQL)
+					
+					'Get Sender's User ID
+					Function.Global.Security.GetUserID(V.Caller.User,V.Caller.CompanyCode,V.Local.iUserS)
+					Function.Global.Security.GetUserID(V.Local.sOriginator.Trim,V.Caller.CompanyCode,V.Local.iUserR)
+					
+					'send a message that the SO has been approved
+					F.Intrinsic.String.Concat("SO ",V.Global.sSO.Trim," Approved",V.Local.sSubject)
+					F.Intrinsic.String.Concat("SO Number: ",V.Global.sSO," has been approved by ",V.Caller.User," at ",V.Ambient.Now,V.Local.sMsg)
+					F.Global.Messaging.InternalMessageCreate(-1,V.Ambient.Date,V.Local.iUserS.Trim,V.Local.sSubject,V.Local.sMsg,V.Local.iMsgID)
+					F.Global.Messaging.InternalMessageQueueToUser(V.Local.iUserR,V.Local.iMsgID)
+
+					F.Global.Messaging.isCourierRunning(V.Local.iRet)
+					F.Intrinsic.Control.If(V.Local.iRet,<>,0)
+						F.Global.Security.GetUserEmail(V.Local.sOriginator.Trim,V.Caller.CompanyCode,V.Local.sEmail)
+						F.Global.Security.GetFullName(V.Local.sOriginator.Trim,V.Caller.CompanyCode,V.Local.sOrigName)
+						F.Global.Security.GetUserEmail(V.Caller.User,V.Caller.CompanyCode,V.Local.sUserEmail)
+						F.Global.Security.GetFullName(V.Caller.User,V.Caller.CompanyCode,V.Local.sUserName)
+						F.Global.Messaging.CreateEMMessage(V.Local.sEmail,V.Local.sOrigName,V.Local.sUserEmail,V.Local.sUserName,V.Local.sSubject,V.Local.sMsg)
+'						F.Intrinsic.UI.Msgbox("Email Sent.")
+'					F.Intrinsic.Control.Else
+'						F.Intrinsic.UI.Msgbox("Courier is not running. Please ensure courier is running in order to send emails.")
+					F.Intrinsic.Control.EndIf
+					
+'					F.Intrinsic.UI.Msgbox("PO is approved.","NOTIFICATION")
+					
+'					F.Intrinsic.Control.If(V.Caller.Hook,=,16890)
+'						F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000047,"LOCK",0)
+'						F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000064,"LOCK",0)
+'					F.Intrinsic.Control.EndIf
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.EndIf
+			F.ODBC.conx!rstApp.Close
+		F.Intrinsic.Control.EndIf
+		F.ODBC.conx!rst.Close
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.CallSub(Unload)
+F.Intrinsic.Control.EndIf
+Program.Sub.Approve.End
+
+Program.Sub.SumSOAmount.Start
+V.Local.fExtension.Declare
+V.Local.sSQL.Declare
+
+'Get the total SO amount before any taxes
+F.Intrinsic.String.Build("select sum(qty_ordered * discount_price) from v_order_lines where order_no = '{0}'",V.Global.sSO,V.Local.sSQL)
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSQL,V.Local.fExtension)
+F.Intrinsic.Math.Add(V.Local.fExtension,0,V.Local.fExtension)
+F.Intrinsic.Variable.AddRV("fAmt",V.Local.fExtension)
+Program.Sub.SumSOAmount.End
+
+Program.Sub.Reject.Start
+V.Local.dDate.Declare(Date)
+
+V.Local.fLimit.Declare(Float)
+
+V.Local.iMsgID.Declare
+V.Local.iRet.Declare
+V.Local.iUserR.Declare
+V.Local.iUserS.Declare
+
+V.Local.sDate.Declare
+V.Local.sEmail.Declare
+V.Local.sMsg.Declare
+V.Local.sOrigName.Declare
+V.Local.sSQL.Declare
+V.Local.sSubject.Declare
+V.Local.sUserEmail.Declare
+V.Local.sUserName.Declare
+V.Local.sUser.Declare
+V.Local.sOriginator.Declare
+
+V.Local.sUser.Set(V.Caller.User)
+'Make sure that a SO was actually selected
+F.Intrinsic.Control.If(V.Global.sSO.Trim,<>,"0000000")
+	F.Intrinsic.Control.CallSub(sumsoamount)
+	
+	F.Intrinsic.String.Build("Select * from GAB_4862_DOL_LMT where GS_User = '{0}'",V.Local.sUser.Trim,V.Local.sSql)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rstLimit",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.conx!rstLimit.EOF,=,False)
+		V.Local.fLimit.Set(V.ODBC.conx!rstLimit.FieldValTrim!APPROVAL_LIMIT)
+	F.Intrinsic.Control.Else
+		V.Local.fLimit.Set(-1)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rstLimit.Close
+	
+	'Check if the total SO amount is within the limit of the user
+	F.Intrinsic.Control.If(V.Args.fAmt,>,V.Local.fLimit)
+		F.Intrinsic.UI.Msgbox("SO cannot be rejected. Total SO amount is above your limit.","SO Approval [APAC]")
+		F.Intrinsic.Control.CallSub(Unload)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("Select ORIGINATOR, APPROVER, APPROVED_DATE from GAB_4862_APRVL where order_no = '{0}' AND date_order = '{1}'",V.Global.sSO.Trim,V.Global.dDateOrder.PervasiveDate,V.Local.sSQL)
+		F.ODBC.Connection!conx.OpenLocalRecordsetRW("rst",V.Local.sSql)
+		'Check if SO in the GAB_4862_APRVL table
+		F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+			F.Intrinsic.UI.Msgbox("SO is not in the approval list.","SO Approval [APAC]")
+			F.Intrinsic.Control.CallSub(Unload)
+		F.Intrinsic.Control.Else
+			V.Local.sOriginator.Set(V.ODBC.conx!rst.FieldValTrim!ORIGINATOR)
+			
+			F.Intrinsic.String.Build("SELECT * FROM GAB_4862_APRVRS WHERE GS_USER = '{0}' AND APPROVER='{1}'",V.Local.sOriginator.Trim,V.Local.sUser.Trim,V.Local.sSQL)
+			F.ODBC.Connection!conx.OpenLocalRecordsetRO("rstApp",V.Local.sSql)
+			'Check if the current user can reject the selected SO based on originator
+			F.Intrinsic.Control.If(V.ODBC.conx!rstApp.EOF,=,True)
+				F.Intrinsic.UI.Msgbox("You are not set to approve/reject this PO.","SO Approval [APAC]")
+				F.Intrinsic.Control.CallSub(Unload)
+			F.Intrinsic.Control.Else
+				F.ODBC.conx!rst.Set!Approver("")
+				F.ODBC.conx!rst.Set!Approved_Date("1900-01-01")
+				F.ODBC.conx!rst.Update
+'				F.Intrinsic.Control.If(V.Caller.Hook,=,16900)
+'					V.Passed.GAB-TEXT-1.Set("")
+'					V.Passed.GAB-TEXT-2.Set("")
+'					V.Passed.GAB-CHK-1.Set("N")
+'				F.Intrinsic.Control.EndIf
+				V.Global.sOrig.Set(V.Local.sOriginator.Trim)
+				
+				Gui.F_Reject..Show
+				
+			F.Intrinsic.Control.EndIf
+			F.ODBC.conx!rstApp.Close
+		F.Intrinsic.Control.EndIf
+		F.ODBC.conx!rst.Close
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.CallSub(Unload)
+F.Intrinsic.Control.EndIf
+Program.Sub.Reject.End
+
+Program.Sub.OpenSOReview.Start
+V.Local.fBase.Declare
+V.Local.fCustomer.Declare
+
+V.Local.i1.Declare
+V.Local.iRow.Declare
+
+V.Local.sCaption.Declare
+V.Local.sCurrCo.Declare
+V.Local.sCurrCust.Declare
+V.Local.sPart.Declare
+V.Local.sSO.Declare
+V.Local.sRet.Declare
+V.Local.sSQL.Declare
+
+F.Intrinsic.Control.If(V.DataTable.dtSO.Exists,=,True)
+	F.Data.DataTable.Close("dtSO")
+F.Intrinsic.Control.EndIf
+
+'Check if SO exists in order_header
+F.Intrinsic.String.Build("select company_currency, order_currency from v_order_header where order_no = '{0}'",V.Global.sSO.Trim,V.Local.sSQL)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+	F.Intrinsic.UI.Msgbox("SO data not found","SO Approval [APAC]")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Else
+	Gui.F_ReviewSO.txtCurr.Text(V.ODBC.conx!rst.FieldValTrim!order_currency)
+	V.Local.sCurrCo.Set(V.ODBC.conx!rst.FieldValTrim!company_currency)
+	V.Local.sCurrCust.Set(V.ODBC.conx!rst.FieldValTrim!order_currency)
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rst.Close
+
+F.Intrinsic.String.Build("select record_no as Line, Part, Location as Loc, Description, product_line as PL, qty_ordered as Quantity, um_order as UM, price_disc_ord as CustPrice, (qty_ordered*price_disc_ord) as CustExt, discount_price as CoPrice, (qty_ordered*discount_price) as CoExt from v_order_lines where order_no = '{0}' order by record_no",V.Global.sSO.Trim,V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtSO","Conx",V.Local.sSQL,True)
+Gui.F_ReviewSO.GsGCSO.AddGridviewFromDatatable("gvSO","dtSO")
+Gui.F_ReviewSO.GsGCSO.MainView("gvSO")
+F.Intrinsic.string.Build("Unit Price in {0}",V.Local.sCurrCust,V.Local.sCaption)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustPrice","Caption",V.Local.sCaption)
+F.Intrinsic.string.Build("Extension in {0}",V.Local.sCurrCust,V.Local.sCaption)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustExt","Caption",V.Local.sCaption)
+F.Intrinsic.string.Build("Unit Price in {0}",V.Local.sCurrCo,V.Local.sCaption)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CoPrice","Caption",V.Local.sCaption)
+F.Intrinsic.string.Build("Extension in {0}",V.Local.sCurrCo,V.Local.sCaption)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CoExt","Caption",V.Local.sCaption)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Line","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Part","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Description","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","PL","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Quantity","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","UM","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustPrice","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustExt","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CoPrice","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CoExt","HeaderHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Line","CellHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","PL","CellHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","UM","CellHAlignment","Center")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Quantity","DisplayCustomNumeric","##,###,##0.0000")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustPrice","DisplayCustomNumeric","##,###,##0.0000")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustExt","DisplayCustomNumeric","##,###,##0.0000")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CoPrice","DisplayCustomNumeric","##,###,##0.0000")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CoExt","DisplayCustomNumeric","##,###,##0.0000")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Line","MinWidth","30")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Part","MinWidth","120")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Description","MinWidth","200")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","PL","MinWidth","60")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Quantity","MinWidth","100")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","UM","MinWidth","45")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustPrice","MinWidth","120")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustExt","MinWidth","120")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CoPrice","MinWidth","120")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CoExt","MinWidth","120")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Part","AllowEdit",False)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Description","AllowEdit",False)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Loc","Visible",False)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Line","Fixed","Left")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Description","Fixed","Left")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Description","CellFontUnderline",True)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Description","CellForeColor",V.Color.Blue)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Part","Fixed","Left")
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Part","CellFontUnderline",True)
+Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","Part","CellForeColor",V.Color.Blue)
+
+F.Intrinsic.Control.If(V.Local.sCurrCo.Trim,=,V.Local.sCurrCust.Trim)
+	Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustPrice","Visible",False)
+	Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustExt","Visible",False)
+	gui.F_ReviewSO.lblCustomer.Visible(False)
+	Gui.F_ReviewSO.txtCustExt.Visible(False)
+F.Intrinsic.Control.Else
+	Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustPrice","Visible",True)
+	Gui.F_ReviewSO.GsGCSO.SetColumnProperty("gvSO","CustExt","Visible",True)
+	Gui.F_ReviewSO.lblCustomer.Visible(True)
+	Gui.F_ReviewSO.txtCustExt.Visible(True)
+F.Intrinsic.Control.EndIf
+'Grid background color
+F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtSO.RowCount--,2)
+	Gui.F_ReviewSO.GsGCSO.SetRowAppearance("gvSO",V.Local.i1,"backcolor","aliceblue")
+F.Intrinsic.Control.Next(V.Local.i1)
+F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtSO.RowCount--,1)
+	V.Local.sPart.Set(V.DataTable.dtSO(V.Local.i1).Part!FieldValTrim)
+	F.Intrinsic.String.Build("select part from inventory_mstr where part = '{0}' and location = '{1}'",V.Local.sPart.PSQLFriendly,V.DataTable.dtSO(V.Local.i1).Loc!FieldValTrim,V.Local.sSQL)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+		Gui.F_ReviewSO.GsGCSO.SetRowAppearance("gvSO",V.Local.i1,"backcolor",V.Color.Orange)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.Close
+F.Intrinsic.Control.Next(V.Local.i1)
+'Total Extension in vendor and base currencies
+F.Intrinsic.String.Build("Total Extension in {0} :",V.Local.sCurrCust,V.Local.sCaption)
+Gui.F_ReviewSO.lblCustomer.Caption(V.Local.sCaption)
+F.Intrinsic.String.Build("Total Extension in {0} :",V.Local.sCurrCo,V.Local.sCaption)
+Gui.F_ReviewSO.lblBase.Caption(V.Local.sCaption)
+F.Data.DataTable.Compute("dtSO","SUM(CustExt)","",V.Local.fCustomer)
+F.Data.DataTable.Compute("dtSO","SUM(CoExt)","",V.Local.fBase)
+F.Intrinsic.String.Format(V.Local.fBase,"#,0.00000",V.Local.sRet)
+Gui.F_ReviewSO.txtBaseExt.Text(V.Local.sRet)
+F.Intrinsic.String.Format(V.Local.fCustomer,"#,0.00000",V.Local.sRet)
+Gui.F_ReviewSO.txtCustExt.Text(V.Local.sRet)
+'Set SO number in the screen title
+F.Intrinsic.String.Build("SO Review for {0}",V.Global.sSO,V.Local.sCaption)
+Gui.F_ReviewSO..Caption(V.Local.sCaption)
+Gui.F_Approval..Enabled(False)
+Gui.F_ReviewSO..Show
+Program.Sub.OpenSOReview.End
+
+Program.Sub.Comments.Start
+${$0$}$SO Approval$}$MHERTANTO$}$22/11/2017 2:18:21 PM$}$False
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$Sales Order Approval dashboard for approver listing SO to be approved
+Program.Sub.Comments.End
