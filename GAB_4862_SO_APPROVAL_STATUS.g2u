@@ -1,0 +1,314 @@
+Program.Sub.ScreenSU.Start
+Gui.F_SOStatus..Create
+Gui.F_SOStatus..Caption("SO Approval Status")
+Gui.F_SOStatus..Size(15360,8775)
+Gui.F_SOStatus..MinX(0)
+Gui.F_SOStatus..MinY(0)
+Gui.F_SOStatus..Position(0,0)
+Gui.F_SOStatus..BackColor(-2147483633)
+Gui.F_SOStatus..MousePointer(0)
+Gui.F_SOStatus..Event(UnLoad,Unload)
+Gui.F_SOStatus..Sizeable(False)
+Gui.F_SOStatus.tab1.Create(Tab)
+Gui.F_SOStatus.tab1.Size(14985,6870)
+Gui.F_SOStatus.tab1.Position(90,1275)
+Gui.F_SOStatus.tab1.FontSize(9)
+Gui.F_SOStatus.tab1.Tabs(3)
+Gui.F_SOStatus.tab1.SetTab(0)
+Gui.F_SOStatus.tab1.Caption("Approved")
+Gui.F_SOStatus.tab1.SetTab(1)
+Gui.F_SOStatus.tab1.Caption("Pending")
+Gui.F_SOStatus.tab1.SetTab(2)
+Gui.F_SOStatus.tab1.Caption("Rejected")
+Gui.F_SOStatus.GsGCApproved.Create(GsGridControl)
+Gui.F_SOStatus.GsGCApproved.Size(14730,6330)
+Gui.F_SOStatus.GsGCApproved.Position(75,60)
+Gui.F_SOStatus.GsGCApproved.Parent("tab1",0)
+Gui.F_SOStatus.GsGCApproved.Event(RowCellClick,GcGCApproved_Clicked)
+Gui.F_SOStatus.GsGCPending.Create(GsGridControl)
+Gui.F_SOStatus.GsGCPending.Size(14730,6330)
+Gui.F_SOStatus.GsGCPending.Position(60,60)
+Gui.F_SOStatus.GsGCPending.Parent("tab1",1)
+Gui.F_SOStatus.GsGCPending.Event(RowCellClick,GsGCPen_Clicked)
+Gui.F_SOStatus.GsGCReject.Create(GsGridControl)
+Gui.F_SOStatus.GsGCReject.Size(14730,6330)
+Gui.F_SOStatus.GsGCReject.Position(60,60)
+Gui.F_SOStatus.GsGCReject.Parent("tab1",2)
+Gui.F_SOStatus.GsGCReject.Event(RowCellClick,GsGCReject_Clicked)
+Gui.F_SOStatus.picGSSLogo.Create(PictureBox)
+Gui.F_SOStatus.picGSSLogo.Size(4125,960)
+Gui.F_SOStatus.picGSSLogo.Position(90,60)
+Gui.F_SOStatus.cmdRefresh.Create(Button)
+Gui.F_SOStatus.cmdRefresh.Size(1800,660)
+Gui.F_SOStatus.cmdRefresh.Position(13245,105)
+Gui.F_SOStatus.cmdRefresh.Caption("REFRESH")
+Gui.F_SOStatus.cmdRefresh.FontSize(9)
+Gui.F_SOStatus.cmdRefresh.Event(Click,RefreshScreen)
+Gui.F_SOStatus.dtp1.Create(DatePicker)
+Gui.F_SOStatus.dtp1.Size(1935,285)
+Gui.F_SOStatus.dtp1.Position(11100,405)
+Gui.F_SOStatus.lbl1.Create(Label,"Cut Off Date",True,1935,255,0,11085,180,True,0,"Arial",9,-2147483633,0)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+V.Local.dCutoff.Declare(Date)
+
+V.Local.sGSSLogo.Declare
+V.Local.sIconPath.Declare
+
+F.ODBC.Connection!Conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass,180)
+
+F.Intrinsic.String.Concat(V.Caller.GlobalDir,"\ART\gss2.ico",V.Local.sIconPath)
+F.Intrinsic.String.Concat(V.Caller.GlobalDir,"\ART\GAB_GSS_Logo_Green_Dash.png",V.Local.sGSSLogo)
+'F.Intrinsic.String.Concat(V.Caller.PluginsDir,"\GAB\GAS\gss2.ico",V.Local.sIconPath)
+'F.Intrinsic.String.Concat(V.Caller.PluginsDir,"\GAB\GAS\GAB_GSS_Logo_Green_Dash.png",V.Local.sGSSLogo)
+Gui.F_SOStatus.picGSSLogo.Picture(V.Local.sGSSLogo)
+Gui.F_SOStatus..Icon(V.Local.sIconPath)
+
+F.Intrinsic.Date.DateAdd("D",-30,V.Ambient.Date,V.Local.dCutoff)
+Gui.F_SOStatus.dtp1.Value(V.Local.dCutoff)
+
+F.Intrinsic.Control.CallSub(refreshscreen)
+Gui.F_SOStatus.tab1.SetTab(0)
+
+Gui.F_SOStatus..Show
+Program.Sub.Main.End
+
+Program.Sub.RefreshScreen.Start
+V.Local.dCutoff.Declare(Date)
+
+V.Local.i1.Declare
+
+V.Local.sFilter.Declare
+V.Local.sRet.Declare
+V.Local.sSQL.Declare
+V.Local.sUser.Declare
+
+V.Local.dCutoff.Set(V.Screen.F_SOStatus!dtp1.Value)
+
+Gui.F_SOStatus.tab1.Visible(False)
+
+F.Intrinsic.Control.If(V.DataTable.dtApp.Exists,=,True)
+	F.Data.DataTable.Close("dtApp")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.UI.InvokeWaitDialog("Loading SO Approval Data","SO Approval Status [APAC]")
+F.Intrinsic.String.Build("select order_no as SO, customer as Customer, ' ' as Name, date_order as SODate, date_due as DueDate, amount as Amount, originator as Originator, approver as Approver, approved_date as ApprovedDate from GAB_4862_APRVL where approver <> '' and approver is not null and approver <> '*REVISE*' and approver <> '*REJECT*' and date_order >= '{0}' order by SODate",V.Local.dCutoff.PervasiveDate,V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtApp","Conx",V.Local.sSQL,True)
+F.Data.DataTable.AddColumn("dtApp","Print","String")
+F.Data.Dictionary.CreateFromSQL("dicCust","conx","select rtrim(customer), name_customer from v_customer_master")
+F.Data.Dictionary.SetDefaultReturn("dicCust","")
+'F.Data.DataTable.CreateFromSQL("dtVen","Conx","select vendor, name_vendor from v_vendor_master where vendor <> ''")
+F.Intrinsic.UI.ChangeWaitStatus("Loading Approved Sales Orders")
+F.Data.DataTable.FillFromDictionary("dtApp","dicCust","Customer","Name")
+'F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtApp.RowCount--,1)
+'	F.Intrinsic.String.Build("vendor = '{0}'",V.DataTable.dtApp(V.Local.i1).Vendor!FieldValTrim,V.Local.sFilter)
+'	F.Data.DataTable.Select("dtVen",V.Local.sFilter,V.Local.sRet)
+'	F.Data.DataTable.SetValue("dtApp",V.Local.i1,"Name",V.DataTable.dtVen(V.Local.sRet).name_vendor!FieldValTrim)
+'F.Intrinsic.Control.Next(V.Local.i1)
+Gui.F_SOStatus.GsGCApproved.AddGridviewFromDatatable("gvApp","dtApp")
+Gui.F_SOStatus.GsGCApproved.MainView("gvApp")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Customer","Visible",False)
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Name","Caption","Customer")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SODate","Caption","SO Date")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","DueDate","Caption","Due Date")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Approver","Caption","Approved By")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","ApprovedDate","Caption","Approved Date")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Print","ShowCaption",False)
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Print","AllowEdit",False)
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SO","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Name","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SODate","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","DueDate","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Amount","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Originator","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Approver","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","ApprovedDate","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SO","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SODate","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","DueDate","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Originator","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Approver","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","ApprovedDate","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SODate","DisplayCustomDatetime","d")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","DueDate","DisplayCustomDatetime","d")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","ApprovedDate","DisplayCustomDatetime","d")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","Amount","DisplayCustomNumeric","##,###,##0.00")
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SO","CellForeColor",V.Color.Blue)
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SO","CellFontUnderline",True)
+Gui.F_SOStatus.GsGCApproved.SetColumnProperty("gvApp","SO","AllowEdit",False)
+Gui.F_SOStatus.GsGCApproved.ColumnEdit("gvApp","Print","EditorButton","Print")
+
+F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtApp.RowCount--,2)
+	Gui.F_SOStatus.GsGCApproved.SetRowAppearance("gvApp",V.Local.i1,"backcolor","aliceblue")
+F.Intrinsic.Control.Next(V.Local.i1)
+
+F.Intrinsic.Control.If(V.DataTable.dtPen.Exists,=,True)
+	F.Data.DataTable.Close("dtPen")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.UI.ChangeWaitStatus("Loading Pending Sales Orders")
+F.Data.DataTable.CreateFromSQL("dtPen","Conx","select order_no as SO, customer as Customer, ' ' as Name, date_order as SODate, date_due as DueDate, amount as Amount, originator as Originator from GAB_4862_APRVL where approver = '' or approver is null or approver = '*REVISE*' order by SODate",True)
+F.Data.DataTable.FillFromDictionary("dtPen","dicCust","Customer","Name")
+'F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtPen.RowCount--,1)
+'	F.Intrinsic.String.Build("vendor = '{0}'",V.DataTable.dtPen(V.Local.i1).Vendor!FieldValTrim,V.Local.sFilter)
+'	F.Data.DataTable.Select("dtVen",V.Local.sFilter,V.Local.sRet)
+'	F.Data.DataTable.SetValue("dtPen",V.Local.i1,"Name",V.DataTable.dtVen(V.Local.sRet).name_vendor!FieldValTrim)
+'F.Intrinsic.Control.Next(V.Local.i1)
+Gui.F_SOStatus.GsGCPending.AddGridviewFromDatatable("gvPen","dtPen")
+Gui.F_SOStatus.GsGCPending.MainView("gvPen")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","Customer","Visible",False)
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","Name","Caption","Customer")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SODate","Caption","SO Date")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","DueDate","Caption","Due Date")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SO","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","Name","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SODate","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","DueDate","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","Amount","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","Originator","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SO","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SODate","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","DueDate","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","Originator","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SODate","DisplayCustomDatetime","d")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","DueDate","DisplayCustomDatetime","d")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","Amount","DisplayCustomNumeric","##,###,##0.00")
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SO","CellForeColor",V.Color.Blue)
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SO","CellFontUnderline",True)
+Gui.F_SOStatus.GsGCPending.SetColumnProperty("gvPen","SO","AllowEdit",False)
+
+F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtPen.RowCount--,2)
+	Gui.F_SOStatus.GsGCPending.SetRowAppearance("gvPen",V.Local.i1,"backcolor","aliceblue")
+F.Intrinsic.Control.Next(V.Local.i1)
+
+F.Intrinsic.Control.If(V.DataTable.dtReject.Exists,=,True)
+	F.Data.DataTable.Close("dtReject")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.UI.ChangeWaitStatus("Loading Rejected Sales Orders")
+'V.Local.sUser.Set(V.Caller.User)
+V.Local.sSQL.Set("select p1.order_no as SO, p1.customer as Customer, ' ' as Name, p1.date_order as SODate, p1.date_due as DueDate, p1.amount as Amount, p1.Originator as Originator from GAB_4862_APRVL p1 where p1.approver = '*REJECT*' order by SODate")
+F.Data.DataTable.CreateFromSQL("dtReject","Conx",V.Local.sSQL,True)
+F.Data.DataTable.FillFromDictionary("dtReject","dicCust","Customer","Name")
+'F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtReject.RowCount--,1)
+'	F.Intrinsic.String.Build("vendor = '{0}'",V.DataTable.dtReject(V.Local.i1).Vendor!FieldValTrim,V.Local.sFilter)
+'	F.Data.DataTable.Select("dtVen",V.Local.sFilter,V.Local.sRet)
+'	F.Data.DataTable.SetValue("dtReject",V.Local.i1,"Name",V.DataTable.dtVen(V.Local.sRet).name_vendor!FieldValTrim)
+'F.Intrinsic.Control.Next(V.Local.i1)
+Gui.F_SOStatus.GsGCReject.AddGridviewFromDatatable("gvReject","dtReject")
+Gui.F_SOStatus.GsGCReject.MainView("gvReject")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","Customer","Visible",False)
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","Name","Caption","Customer")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SODate","Caption","SO Date")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","DueDate","Caption","Due Date")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SO","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","Name","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SODate","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","DueDate","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","Amount","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","Originator","HeaderHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SO","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SODate","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","DueDate","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","Originator","CellHAlignment","Center")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SODate","DisplayCustomDatetime","d")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","DueDate","DisplayCustomDatetime","d")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","Amount","DisplayCustomNumeric","##,###,##0.00")
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SO","CellForeColor",V.Color.Blue)
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SO","CellFontUnderline",True)
+Gui.F_SOStatus.GsGCReject.SetColumnProperty("gvReject","SO","AllowEdit",False)
+
+F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtReject.RowCount--,2)
+	Gui.F_SOStatus.GsGCReject.SetRowAppearance("gvReject",V.Local.i1,"backcolor","aliceblue")
+F.Intrinsic.Control.Next(V.Local.i1)
+F.Data.Dictionary.Close("dicCust")
+F.Intrinsic.UI.CloseWaitDialog
+Gui.F_SOStatus.tab1.Visible(True)
+Program.Sub.RefreshScreen.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.If(V.DataTable.dtApp.Exists,=,True)
+	F.Data.DataTable.Close("dtApp")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.DataTable.dtPen.Exists,=,True)
+	F.Data.DataTable.Close("dtPen")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.DataTable.dtReject.Exists,=,True)
+	F.Data.DataTable.Close("dtReject")
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!Conx.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+Program.Sub.GcGCApproved_Clicked.Start
+V.Local.sParam.Declare
+V.Local.sSQL.Declare
+V.Local.sUser.Declare
+
+F.Intrinsic.Control.If(V.Args.Column,=,"Print")
+	F.Intrinsic.String.Build("select approver from GAB_4862_APRVL where order_no = '{0}' and date_order = '{1}'",V.DataTable.dtApp(V.Args.RowIndex).SO!FieldValTrim,V.DataTable.dtApp(V.Args.RowIndex).SODate!FieldValPervasiveDate,V.Local.sSQL)
+	F.ODBC.Connection!Conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.Conx!rst.FieldValTrim!approver,<>,"")
+		F.Intrinsic.String.Build("{0}!*!P!*!!*!",V.DataTable.dtApp(V.Args.RowIndex).SO!FieldValTrim,V.Local.sParam)
+		F.Global.General.CallWrapperSync(910050,V.Local.sParam)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.UI.Msgbox("Approval is required to print this SO","SO Approval Status [APAC]")
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Conx!rst.Close
+F.Intrinsic.Control.ElseIf(V.Args.Column,=,"SO")
+	V.Local.sUser.Set(V.Caller.User)
+	F.Intrinsic.Control.If(V.Local.sUser.Trim,=,V.DataTable.dtApp(V.Args.RowIndex).Originator!FieldValTrim)
+		F.Intrinsic.String.Concat(V.DataTable.dtApp(V.Args.RowIndex).SO!FieldValTrim,"!*!O!*!",V.Local.sParam)
+		F.Global.General.CallWrapperSync(200000,V.Local.sParam)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Concat(V.DataTable.dtApp(V.Args.RowIndex).SO!FieldValTrim,"!*!V!*!",V.Local.sParam)
+		F.Global.General.CallWrapperSync(200000,V.Local.sParam)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+Program.Sub.GcGCApproved_Clicked.End
+
+Program.Sub.GsGCPen_Clicked.Start
+V.Local.sParam.Declare
+V.Local.sUser.Declare
+
+F.Intrinsic.Control.If(V.Args.Column,=,"SO")
+	V.Local.sUser.Set(V.Caller.User)
+	F.Intrinsic.Control.If(V.Local.sUser.Trim,=,V.DataTable.dtPen(V.Args.RowIndex).Originator!FieldValTrim)
+		F.Intrinsic.String.Concat(V.DataTable.dtPen(V.Args.RowIndex).SO!FieldValTrim,"!*!O!*!",V.Local.sParam)
+		F.Global.General.CallWrapperSync(200000,V.Local.sParam)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Concat(V.DataTable.dtPen(V.Args.RowIndex).SO!FieldValTrim,"!*!V!*!",V.Local.sParam)
+		F.Global.General.CallWrapperSync(200000,V.Local.sParam)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+Program.Sub.GsGCPen_Clicked.End
+
+Program.Sub.GsGCReject_Clicked.Start
+V.Local.sParam.Declare
+V.Local.sUser.Declare
+
+F.Intrinsic.Control.If(V.Args.Column,=,"SO")
+	V.Local.sUser.Set(V.Caller.User)
+	F.Intrinsic.Control.If(V.Local.sUser.Trim,=,V.DataTable.dtReject(V.Args.RowIndex).Originator!FieldValTrim)
+		F.Intrinsic.String.Concat(V.DataTable.dtReject(V.Args.RowIndex).SO!FieldValTrim,"!*!O!*!",V.Local.sParam)
+		F.Global.General.CallWrapperSync(200000,V.Local.sParam)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Concat(V.DataTable.dtReject(V.Args.RowIndex).SO!FieldValTrim,"!*!V!*!",V.Local.sParam)
+		F.Global.General.CallWrapperSync(200000,V.Local.sParam)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+Program.Sub.GsGCReject_Clicked.End
+
+Program.Sub.Comments.Start
+${$0$}$SO Approval Status [APAC]$}$MHERTANTO$}$4/12/2017 3:44:15 PM$}$True
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$Dashboard to be used for originators to see which sales order has been approved and ready to be printed.
+Program.Sub.Comments.End
